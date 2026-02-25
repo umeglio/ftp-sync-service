@@ -10,7 +10,9 @@
       "Bash(git push:*)",
       "Bash(gh repo view:*)",
       "Bash(gh api:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "WebFetch(domain:umeglio.github.io)",
+      "Bash(gh repo list:*)"
     ]
   }
 }
