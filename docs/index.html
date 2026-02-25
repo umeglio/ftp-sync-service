@@ -1,220 +1,233 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTP Sync Service - Bidirectional Windows FTP Synchronization</title>
-    <meta name="description" content="A robust Windows service for real-time bidirectional file synchronization between local folders and FTP servers.">
+    <title>FTP Sync Service - Sincronizzazione FTP Bidirezionale per Windows</title>
+    <meta name="description" content="Un servizio Windows robusto per la sincronizzazione bidirezionale in tempo reale tra cartelle locali e server FTP.">
     <link rel="canonical" href="https://umeglio.github.io/ftp-sync-service/">
     <style>
         :root {
-            --primary: #0078D6;
-            --primary-dark: #005a9e;
-            --accent: #00b4d8;
-            --bg: #0a0e17;
-            --bg-card: #131a2b;
-            --bg-card-hover: #1a2440;
-            --text: #e0e6f0;
-            --text-muted: #8892a4;
-            --border: #1e2a42;
-            --green: #00c853;
-            --orange: #ff9100;
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --text-color: #333;
+            --light-bg: #f5f5f5;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
+            color: var(--text-color);
+            background-color: #fff;
         }
 
-        /* Nav */
-        nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(10, 14, 23, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            z-index: 100;
-            padding: 0 2rem;
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* Header */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4rem 0 3rem;
+            text-align: center;
+            position: relative;
         }
-        .nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
+        .language-selector {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 60px;
+            gap: 0.3rem;
         }
-        .nav-brand {
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: var(--accent);
-            text-decoration: none;
-        }
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            margin-left: 2rem;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-        .nav-links a:hover { color: var(--text); }
-        .lang-toggle {
-            background: var(--border);
-            border: none;
-            color: var(--text);
-            padding: 0.3rem 0.8rem;
+        .language-btn {
+            padding: 0.35rem 0.9rem;
+            border: 1px solid rgba(255,255,255,0.3);
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.85rem;
-            margin-left: 2rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: transparent;
+            color: rgba(255,255,255,0.7);
         }
-        .lang-toggle:hover { background: var(--bg-card-hover); }
-
-        /* Hero */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 6rem 2rem 4rem;
-            background: radial-gradient(ellipse at 50% 0%, rgba(0, 120, 214, 0.15) 0%, transparent 60%);
+        .language-btn.active {
+            background: var(--secondary-color);
+            color: #fff;
+            border-color: var(--secondary-color);
         }
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
+        .language-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .version-badge {
+            display: inline-block;
+            background: rgba(52,152,219,0.2);
+            border: 1px solid var(--secondary-color);
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--accent), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
-        .hero .subtitle {
-            font-size: 1.25rem;
-            color: var(--text-muted);
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+        }
+        header .subtitle {
+            font-size: 1.15rem;
+            opacity: 0.85;
             max-width: 600px;
-            margin: 0 auto 2.5rem;
+            margin: 0 auto 2rem;
         }
-        .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
         .btn {
             display: inline-block;
-            padding: 0.75rem 2rem;
-            border-radius: 8px;
+            padding: 0.7rem 2rem;
+            border-radius: 6px;
             font-size: 1rem;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.2s;
         }
         .btn-primary {
-            background: var(--primary);
+            background: var(--secondary-color);
             color: #fff;
         }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-primary:hover { background: #2980b9; transform: translateY(-1px); }
         .btn-outline {
-            border: 1px solid var(--border);
-            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: #fff;
             background: transparent;
         }
-        .btn-outline:hover { background: var(--bg-card); }
-        .version-badge {
-            display: inline-block;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            color: var(--green);
-            margin-bottom: 1.5rem;
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+        /* Nav */
+        nav {
+            background-color: var(--secondary-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 0;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+        nav ul li a:hover {
+            background: rgba(255,255,255,0.15);
         }
 
         /* Sections */
-        section { padding: 5rem 2rem; }
-        .container { max-width: 1100px; margin: 0 auto; }
+        section { padding: 4rem 0; }
+        section:nth-of-type(even) { background-color: var(--light-bg); }
+
         .section-title {
-            font-size: 2rem;
-            font-weight: 700;
             text-align: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 3rem;
+            color: var(--primary-color);
+        }
+        .section-title h2 {
+            font-size: 2.2rem;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background-color: var(--secondary-color);
         }
         .section-subtitle {
             text-align: center;
-            color: var(--text-muted);
-            margin-bottom: 3rem;
+            color: #666;
+            margin-top: 0.5rem;
             font-size: 1.05rem;
         }
 
         /* Feature Grid */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 1.5rem;
+            margin-top: 2rem;
         }
         .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            background: #fff;
+            border-radius: 8px;
             padding: 2rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--secondary-color);
             transition: all 0.2s;
         }
         .feature-card:hover {
-            background: var(--bg-card-hover);
-            transform: translateY(-2px);
-            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
         }
         .feature-icon {
             font-size: 2rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
         .feature-card h3 {
             font-size: 1.1rem;
+            color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
         .feature-card p {
-            color: var(--text-muted);
+            color: #666;
             font-size: 0.95rem;
         }
 
         /* Architecture */
         .arch-diagram {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            background: var(--primary-color);
+            border-radius: 8px;
             padding: 2rem;
             overflow-x: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .arch-diagram pre {
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
             font-size: 0.85rem;
-            color: var(--accent);
+            color: var(--secondary-color);
             line-height: 1.5;
             text-align: center;
         }
 
         /* Code blocks */
         .code-block {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
+            background: var(--primary-color);
+            border-radius: 6px;
+            padding: 1rem 1.5rem;
             overflow-x: auto;
-            margin: 1rem 0;
+            margin: 0.8rem 0;
         }
         .code-block code {
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
             font-size: 0.9rem;
-            color: var(--green);
-        }
-        .code-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: #7bed9f;
         }
 
         /* Steps */
@@ -223,159 +236,172 @@
             display: flex;
             gap: 1.5rem;
             margin-bottom: 2rem;
+            align-items: flex-start;
         }
         .step-num {
             flex-shrink: 0;
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
+            width: 44px;
+            height: 44px;
+            background: var(--secondary-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             font-size: 1.1rem;
+            color: #fff;
         }
         .step-content h3 {
             font-size: 1.05rem;
+            color: var(--primary-color);
             margin-bottom: 0.3rem;
         }
         .step-content p {
-            color: var(--text-muted);
+            color: #666;
             font-size: 0.95rem;
         }
 
         /* Log preview */
         .log-preview {
-            background: #0c1018;
-            border: 1px solid var(--border);
+            background: var(--primary-color);
             border-radius: 8px;
             padding: 1.5rem;
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
             font-size: 0.8rem;
             line-height: 1.8;
             overflow-x: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        .log-ts { color: var(--text-muted); }
-        .log-tag { color: var(--accent); }
-        .log-action { color: var(--green); }
-        .log-file { color: var(--orange); }
+        .log-ts { color: #95a5a6; }
+        .log-tag { color: #3498db; }
+        .log-action { color: #2ecc71; }
+        .log-file { color: #e67e22; }
 
         /* Footer */
         footer {
-            border-top: 1px solid var(--border);
+            background: var(--primary-color);
+            color: rgba(255,255,255,0.7);
             padding: 2rem;
             text-align: center;
-            color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
-        footer a { color: var(--accent); text-decoration: none; }
+        footer a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        footer a:hover { text-decoration: underline; }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.2rem; }
-            .nav-links { display: none; }
+            header h1 { font-size: 2rem; }
+            nav ul { flex-wrap: wrap; }
+            nav ul li a { padding: 0.7rem 1rem; font-size: 0.85rem; }
             .features-grid { grid-template-columns: 1fr; }
+            .step { gap: 1rem; }
         }
 
-        /* Hidden lang class */
-        .lang-it { display: none; }
+        /* Language visibility - use body class to control which lang is shown */
+        body.lang-active-it .lang-en { display: none !important; }
+        body.lang-active-en .lang-it { display: none !important; }
     </style>
 </head>
-<body>
+<body class="lang-active-it">
 
-<nav>
-    <div class="nav-inner">
-        <a class="nav-brand" href="#">FTP Sync</a>
-        <div style="display:flex;align-items:center;">
-            <div class="nav-links">
-                <a href="#features" data-en="Features" data-it="Funzionalita">Features</a>
-                <a href="#architecture" data-en="Architecture" data-it="Architettura">Architecture</a>
-                <a href="#install" data-en="Install" data-it="Installazione">Install</a>
-                <a href="#logs" data-en="Logs" data-it="Log">Logs</a>
-                <a href="https://github.com/umeglio/ftp-sync-service">GitHub</a>
-            </div>
-            <button class="lang-toggle" onclick="toggleLang()" id="langBtn">IT</button>
-        </div>
+<!-- HEADER -->
+<header>
+    <div class="language-selector">
+        <button class="language-btn active" onclick="switchLanguage('it')" id="btnIT">IT</button>
+        <button class="language-btn" onclick="switchLanguage('en')" id="btnEN">EN</button>
     </div>
-</nav>
-
-<!-- HERO -->
-<section class="hero" id="top">
-    <div>
+    <div class="container">
         <div class="version-badge">v2.1-Enterprise</div>
         <h1>FTP Sync Service</h1>
-        <p class="subtitle lang-en">A robust Windows service for real-time bidirectional file synchronization between local folders and FTP servers.</p>
         <p class="subtitle lang-it">Un servizio Windows robusto per la sincronizzazione bidirezionale in tempo reale tra cartelle locali e server FTP.</p>
-        <div class="hero-buttons">
-            <a href="https://github.com/umeglio/ftp-sync-service" class="btn btn-primary">View on GitHub</a>
+        <p class="subtitle lang-en">A robust Windows service for real-time bidirectional file synchronization between local folders and FTP servers.</p>
+        <div class="header-buttons">
+            <a href="https://github.com/umeglio/ftp-sync-service" class="btn btn-primary">GitHub</a>
             <a href="https://github.com/umeglio/ftp-sync-service/releases" class="btn btn-outline">Download</a>
         </div>
     </div>
-</section>
+</header>
+
+<!-- NAV -->
+<nav>
+    <ul>
+        <li><a href="#features" data-it="Funzionalit&agrave;" data-en="Features">Funzionalit&agrave;</a></li>
+        <li><a href="#architecture" data-it="Architettura" data-en="Architecture">Architettura</a></li>
+        <li><a href="#install" data-it="Installazione" data-en="Install">Installazione</a></li>
+        <li><a href="#logs" data-it="Log" data-en="Logs">Log</a></li>
+        <li><a href="https://github.com/umeglio/ftp-sync-service">GitHub</a></li>
+    </ul>
+</nav>
 
 <!-- FEATURES -->
 <section id="features">
     <div class="container">
-        <h2 class="section-title lang-en">Features</h2>
-        <h2 class="section-title lang-it">Funzionalita</h2>
+        <div class="section-title">
+            <h2 class="lang-it">Funzionalit&agrave;</h2>
+            <h2 class="lang-en">Features</h2>
+        </div>
+        <p class="section-subtitle lang-it">Tutto ci&ograve; che serve per una sincronizzazione FTP affidabile</p>
         <p class="section-subtitle lang-en">Everything you need for reliable FTP synchronization</p>
-        <p class="section-subtitle lang-it">Tutto cio che serve per una sincronizzazione FTP affidabile</p>
 
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">&#x21C4;</div>
-                <h3 class="lang-en">Bidirectional Sync</h3>
                 <h3 class="lang-it">Sincronizzazione Bidirezionale</h3>
-                <p class="lang-en">Automatically propagates changes from Client to Server and vice versa, keeping both sides always in sync.</p>
+                <h3 class="lang-en">Bidirectional Sync</h3>
                 <p class="lang-it">Propaga automaticamente le modifiche dal Client al Server e viceversa, mantenendo entrambi i lati sempre sincronizzati.</p>
+                <p class="lang-en">Automatically propagates changes from Client to Server and vice versa, keeping both sides always in sync.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x26A1;</div>
-                <h3 class="lang-en">Real-Time Monitoring</h3>
                 <h3 class="lang-it">Monitoraggio Real-Time</h3>
-                <p class="lang-en">Uses <code>ReadDirectoryChangesW</code> to instantly detect local file creations, modifications, and deletions.</p>
+                <h3 class="lang-en">Real-Time Monitoring</h3>
                 <p class="lang-it">Utilizza <code>ReadDirectoryChangesW</code> per rilevare istantaneamente creazioni, modifiche e cancellazioni locali.</p>
+                <p class="lang-en">Uses <code>ReadDirectoryChangesW</code> to instantly detect local file creations, modifications, and deletions.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x270F;</div>
-                <h3 class="lang-en">Smart Rename</h3>
                 <h3 class="lang-it">Rename Intelligente</h3>
-                <p class="lang-en">Optimizes network traffic using FTP <code>RNFR</code>/<code>RNTO</code> commands instead of re-uploading renamed files.</p>
+                <h3 class="lang-en">Smart Rename</h3>
                 <p class="lang-it">Ottimizza il traffico di rete usando i comandi FTP <code>RNFR</code>/<code>RNTO</code> invece di ricaricare i file rinominati.</p>
+                <p class="lang-en">Optimizes network traffic using FTP <code>RNFR</code>/<code>RNTO</code> commands instead of re-uploading renamed files.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x1F4C2;</div>
-                <h3 class="lang-en">Recursive Directories</h3>
                 <h3 class="lang-it">Directory Ricorsive</h3>
-                <p class="lang-en">Fully handles subfolders and complex directory trees, creating remote directories as needed.</p>
+                <h3 class="lang-en">Recursive Directories</h3>
                 <p class="lang-it">Gestisce completamente sottocartelle e alberi di directory complessi, creando le directory remote automaticamente.</p>
+                <p class="lang-en">Fully handles subfolders and complex directory trees, creating remote directories as needed.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x1F4CA;</div>
-                <h3 class="lang-en">Advanced Logging</h3>
                 <h3 class="lang-it">Logging Avanzato</h3>
-                <p class="lang-en">Sequential logs, thread flow diagrams, and periodic statistics with memory and bandwidth tracking.</p>
+                <h3 class="lang-en">Advanced Logging</h3>
                 <p class="lang-it">Log sequenziali, diagrammi dei thread e statistiche periodiche con monitoraggio memoria e banda.</p>
+                <p class="lang-en">Sequential logs, thread flow diagrams, and periodic statistics with memory and bandwidth tracking.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x1F6E1;</div>
-                <h3 class="lang-en">Robust & Reliable</h3>
                 <h3 class="lang-it">Robusto e Affidabile</h3>
-                <p class="lang-en">Buffer overflow handling, automatic FTP reconnection, and sync loop prevention built-in.</p>
+                <h3 class="lang-en">Robust &amp; Reliable</h3>
                 <p class="lang-it">Gestione overflow buffer, riconnessione FTP automatica e prevenzione loop di sincronizzazione integrati.</p>
+                <p class="lang-en">Buffer overflow handling, automatic FTP reconnection, and sync loop prevention built-in.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- ARCHITECTURE -->
-<section id="architecture" style="background: rgba(0,120,214,0.03);">
+<section id="architecture">
     <div class="container">
-        <h2 class="section-title lang-en">Architecture</h2>
-        <h2 class="section-title lang-it">Architettura</h2>
-        <p class="section-subtitle lang-en">Three dedicated threads working together</p>
+        <div class="section-title">
+            <h2 class="lang-it">Architettura</h2>
+            <h2 class="lang-en">Architecture</h2>
+        </div>
         <p class="section-subtitle lang-it">Tre thread dedicati che lavorano in sinergia</p>
+        <p class="section-subtitle lang-en">Three dedicated threads working together</p>
 
         <div class="arch-diagram">
 <pre>
@@ -405,42 +431,44 @@
 <!-- INSTALL -->
 <section id="install">
     <div class="container">
-        <h2 class="section-title lang-en">Quick Start</h2>
-        <h2 class="section-title lang-it">Guida Rapida</h2>
-        <p class="section-subtitle lang-en">Up and running in 4 steps</p>
+        <div class="section-title">
+            <h2 class="lang-it">Guida Rapida</h2>
+            <h2 class="lang-en">Quick Start</h2>
+        </div>
         <p class="section-subtitle lang-it">Operativo in 4 passaggi</p>
+        <p class="section-subtitle lang-en">Up and running in 4 steps</p>
 
         <div class="steps">
             <div class="step">
                 <div class="step-num">1</div>
                 <div class="step-content">
-                    <h3 class="lang-en">Build</h3>
                     <h3 class="lang-it">Compila</h3>
+                    <h3 class="lang-en">Build</h3>
                     <div class="code-block"><code>g++ -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -static</code></div>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
                 <div class="step-content">
-                    <h3 class="lang-en">Configure</h3>
                     <h3 class="lang-it">Configura</h3>
-                    <p class="lang-en">Copy <code>config.ini.example</code> to <code>config.ini</code> and set your FTP credentials.</p>
+                    <h3 class="lang-en">Configure</h3>
                     <p class="lang-it">Copia <code>config.ini.example</code> in <code>config.ini</code> e inserisci le credenziali FTP.</p>
+                    <p class="lang-en">Copy <code>config.ini.example</code> to <code>config.ini</code> and set your FTP credentials.</p>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
                 <div class="step-content">
-                    <h3 class="lang-en">Install Service</h3>
                     <h3 class="lang-it">Installa il Servizio</h3>
+                    <h3 class="lang-en">Install Service</h3>
                     <div class="code-block"><code>ftp_sync_service.exe --install</code></div>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">4</div>
                 <div class="step-content">
-                    <h3 class="lang-en">Start</h3>
                     <h3 class="lang-it">Avvia</h3>
+                    <h3 class="lang-en">Start</h3>
                     <div class="code-block"><code>sc start FTPSyncService</code></div>
                 </div>
             </div>
@@ -449,17 +477,19 @@
 </section>
 
 <!-- LOGS -->
-<section id="logs" style="background: rgba(0,120,214,0.03);">
+<section id="logs">
     <div class="container">
-        <h2 class="section-title lang-en">Log Output</h2>
-        <h2 class="section-title lang-it">Output dei Log</h2>
+        <div class="section-title">
+            <h2 class="lang-it">Output dei Log</h2>
+            <h2 class="lang-en">Log Output</h2>
+        </div>
+        <p class="section-subtitle lang-it">Visibilit&agrave; in tempo reale su ogni operazione</p>
         <p class="section-subtitle lang-en">Real-time visibility into every operation</p>
-        <p class="section-subtitle lang-it">Visibilita in tempo reale su ogni operazione</p>
 
         <div class="log-preview">
             <span class="log-ts">[25/02 10:38:15.042]</span> <span class="log-tag">[SERVICE_MAIN]</span> <span class="log-action">[START]</span> Spawning Worker Threads<br>
             <span class="log-ts">[25/02 10:38:15.043]</span> <span class="log-tag">[WATCHER]</span> <span class="log-action">[START]</span> Monitoring Loop Started<br>
-            <span class="log-ts">[25/02 10:38:15.044]</span> <span class="log-tag">[POLLER]</span> <span class="log-action">[START]</span> FTP CONNECT & SYNC START<br>
+            <span class="log-ts">[25/02 10:38:15.044]</span> <span class="log-tag">[POLLER]</span> <span class="log-action">[START]</span> FTP CONNECT &amp; SYNC START<br>
             <span class="log-ts">[25/02 10:38:15.500]</span> <span class="log-tag">[POLLER]</span> <span class="log-action">[DOWNLOAD]</span> File: <span class="log-file">document.pdf</span> (1024 bytes)<br>
             <span class="log-ts">[25/02 10:38:16.100]</span> <span class="log-tag">[POLLER]</span> <span class="log-action">[END]</span> SYNC CYCLE COMPLETE<br>
             <span class="log-ts">[25/02 10:39:15.000]</span> <span class="log-tag">[SERVICE_MAIN]</span> <span class="log-action">[HEARTBEAT]</span> Service Running. Monitoring active.<br>
@@ -470,34 +500,59 @@
 
 <!-- FOOTER -->
 <footer>
-    <p>
-        <strong>FTP Sync Service</strong> &mdash; MIT License &copy; 2024 umeglio<br>
-        <a href="https://github.com/umeglio/ftp-sync-service">GitHub</a>
-    </p>
+    <div class="container">
+        <p>
+            <strong>FTP Sync Service</strong> &mdash; MIT License &copy; 2024 umeglio<br>
+            <a href="https://github.com/umeglio/ftp-sync-service">GitHub</a> &middot;
+            <a href="https://umeglio.github.io">umeglio.github.io</a>
+        </p>
+    </div>
 </footer>
 
 <script>
-    let currentLang = 'en';
+    let currentLang = 'it';
 
-    function toggleLang() {
-        currentLang = currentLang === 'en' ? 'it' : 'en';
-        document.getElementById('langBtn').textContent = currentLang === 'en' ? 'IT' : 'EN';
+    function switchLanguage(lang) {
+        if (lang === currentLang) return;
+        currentLang = lang;
 
-        document.querySelectorAll('.lang-en').forEach(el => {
-            el.style.display = currentLang === 'en' ? '' : 'none';
-        });
-        document.querySelectorAll('.lang-it').forEach(el => {
-            el.style.display = currentLang === 'it' ? '' : 'none';
+        // Update button states
+        document.getElementById('btnIT').classList.toggle('active', lang === 'it');
+        document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+
+        // Toggle body class for language visibility
+        document.body.className = 'lang-active-' + lang;
+
+        // Update nav links with data attributes
+        document.querySelectorAll('[data-it]').forEach(el => {
+            el.textContent = el.getAttribute('data-' + lang);
         });
 
-        document.querySelectorAll('[data-en]').forEach(el => {
-            el.textContent = el.getAttribute('data-' + currentLang);
-        });
+        // Update page title and meta
+        if (lang === 'it') {
+            document.title = 'FTP Sync Service - Sincronizzazione FTP Bidirezionale per Windows';
+            document.querySelector('meta[name="description"]').content = 'Un servizio Windows robusto per la sincronizzazione bidirezionale in tempo reale tra cartelle locali e server FTP.';
+            document.documentElement.lang = 'it';
+        } else {
+            document.title = 'FTP Sync Service - Bidirectional Windows FTP Synchronization';
+            document.querySelector('meta[name="description"]').content = 'A robust Windows service for real-time bidirectional file synchronization between local folders and FTP servers.';
+            document.documentElement.lang = 'en';
+        }
     }
 
-    // Initialize
-    toggleLang();
-    toggleLang();
+    // Smooth scrolling
+    document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                window.scrollTo({
+                    top: target.offsetTop - 50,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
 </script>
 
 </body>
