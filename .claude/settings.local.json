@@ -7,7 +7,10 @@
       "Bash(git commit:*)",
       "Bash(gh repo create:*)",
       "Bash(git status:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh api:*)",
+      "Bash(gh run list:*)"
     ]
   }
 }
