@@ -1,0 +1,7 @@
+[FTP]
+IP=192.168.1.100
+Port=21
+User=your_username
+Password=your_password
+LocalFolder=C:\Path\To\LocalFolder
+RemoteFolder=/
