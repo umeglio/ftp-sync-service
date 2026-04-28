@@ -9,6 +9,8 @@
 >
 > **[EN]** A robust, high-performance Windows service written in C++ for bidirectional file synchronization between a local folder and a remote FTP server.
 
+> **Documentazione completa / Full documentation:** [Project Wiki](https://github.com/umeglio/ftp-sync-service/wiki)
+
 ---
 
 ## Features / Funzionalita
@@ -28,6 +30,11 @@
 - **[IT]** Ottimizza il traffico di rete utilizzando i comandi FTP `RNFR`/`RNTO` per rinominare i file sul server invece di ricaricarli.
 - **[EN]** Optimizes network traffic by using FTP `RNFR`/`RNTO` commands to rename files on the server instead of re-uploading them.
 
+### File Exclusions / Esclusioni File
+
+- **[IT]** Lista configurabile di pattern glob (`*.csv|*.prm|*.xls`) per escludere intere categorie di file dalla sincronizzazione bidirezionale.
+- **[EN]** Configurable list of glob patterns (`*.csv|*.prm|*.xls`) to exclude entire file categories from bidirectional synchronization.
+
 ### Recursive Directory Structure / Struttura Ricorsiva
 
 - **[IT]** Gestisce completamente sottocartelle e alberi di directory complessi.
@@ -36,7 +43,7 @@
 ### Advanced Logging / Logging Avanzato
 
 - **Sequential Log**: Cronologia lineare di tutti gli eventi / Linear chronology of all events.
-- **Thread Diagram**: Visualizzazione grafica (stile diagramma di flusso) dell'esecuzione dei thread / Graphical visualization (flowchart-style) of thread execution for immediate debugging.
+- **Thread Diagram**: Visualizzazione grafica (stile diagramma di flusso) dell'esecuzione dei thread / Graphical visualization (flowchart-style) of thread execution.
 - **Statistics**: Report periodici (ogni 10 min) su byte trasferiti, memoria occupata e stato dei thread / Periodic reports (every 10 min) on transferred bytes, memory usage, and thread status.
 
 ### Robustness / Robustezza
@@ -73,18 +80,27 @@
 |--------|-------------|
 | **SERVICE_MAIN** | Main loop, heartbeat every 60s, periodic summary every 10 min |
 | **WATCHER** | Monitors local folder via `ReadDirectoryChangesW`, uploads/deletes/renames on FTP |
-| **POLLER** | Polls FTP server every 10s, downloads new/updated files locally |
+| **POLLER** | Polls FTP server every 10 min (configurable), downloads new/updated files locally |
+
+> **[IT]** Per maggiori dettagli architetturali consulta la pagina [Architecture](https://github.com/umeglio/ftp-sync-service/wiki/Architecture) del wiki.
+> **[EN]** For deeper architectural details see the [Architecture](https://github.com/umeglio/ftp-sync-service/wiki/Architecture) wiki page.
 
 ---
 
 ## Build / Compilazione
 
-The project is written in standard C++ and requires WinAPI libraries. Tested with **MinGW32**.
+The project is written in standard C++ and requires WinAPI libraries. Tested with **MinGW** (32 and 64-bit).
 
-Il progetto e scritto in C++ standard e richiede le librerie WinAPI. Testato con **MinGW32**.
+Il progetto e scritto in C++ standard e richiede le librerie WinAPI. Testato con **MinGW** (32 e 64 bit).
 
 ```bash
-g++ -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -lshlwapi -static
+g++ -O2 -Wall -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -lshlwapi -static
+```
+
+Or via Makefile / Oppure tramite Makefile:
+
+```bash
+make
 ```
 
 ### Linked Dependencies / Dipendenze
@@ -117,10 +133,22 @@ RemoteFolder=/backup
 Exclusions=*.tmp|*.bak|~*
 ```
 
+| Key | Description |
+|-----|-------------|
+| `IP` | FTP server hostname or IP / IP o hostname del server FTP |
+| `Port` | FTP server port (default 21) / Porta del server FTP |
+| `User` / `Password` | FTP credentials / Credenziali FTP |
+| `LocalFolder` | Absolute path to the local folder to sync / Percorso assoluto della cartella locale |
+| `RemoteFolder` | Remote root folder on FTP / Cartella radice remota su FTP |
+| `Exclusions` | Pipe-separated glob patterns to skip / Pattern glob separati da pipe da escludere |
+
 ### Exclusions / Esclusioni
 
 - **[IT]** Lista opzionale di pattern glob (`*`, `?`) separati da `|`. I file il cui nome corrisponde a uno qualsiasi dei pattern non vengono sincronizzati (in nessuna direzione). Esempio: `*.csv|*.prm|*.xls`.
 - **[EN]** Optional list of glob patterns (`*`, `?`) separated by `|`. Files whose name matches any pattern are not synchronized (in either direction). Example: `*.csv|*.prm|*.xls`.
+
+> **[IT]** Pagina dedicata: [Exclusions](https://github.com/umeglio/ftp-sync-service/wiki/Exclusions).
+> **[EN]** Dedicated page: [Exclusions](https://github.com/umeglio/ftp-sync-service/wiki/Exclusions).
 
 ---
 
@@ -148,6 +176,9 @@ sc start FTPSyncService
 sc stop FTPSyncService
 ```
 
+> **[IT]** Guida completa: [Installation](https://github.com/umeglio/ftp-sync-service/wiki/Installation).
+> **[EN]** Full guide: [Installation](https://github.com/umeglio/ftp-sync-service/wiki/Installation).
+
 ---
 
 ## Logs & Monitoring / Log e Monitoraggio
@@ -170,6 +201,24 @@ I log vengono salvati automaticamente nella sottocartella `log`.
 [25/02 10:38:15.500] [POLLER] [DOWNLOAD] File: document.pdf (1024 bytes)
 [25/02 10:38:16.100] [POLLER] [END] SYNC CYCLE COMPLETE
 ```
+
+> **[IT]** Approfondimento sui formati di log: [Logging](https://github.com/umeglio/ftp-sync-service/wiki/Logging).
+> **[EN]** Deep-dive on log formats: [Logging](https://github.com/umeglio/ftp-sync-service/wiki/Logging).
+
+---
+
+## Documentation / Documentazione
+
+| Page | Topic |
+|------|-------|
+| [Home](https://github.com/umeglio/ftp-sync-service/wiki) | Index / Indice |
+| [Installation](https://github.com/umeglio/ftp-sync-service/wiki/Installation) | Service install/uninstall / Installazione e disinstallazione |
+| [Configuration](https://github.com/umeglio/ftp-sync-service/wiki/Configuration) | All `config.ini` keys / Tutte le chiavi |
+| [Build](https://github.com/umeglio/ftp-sync-service/wiki/Build) | Compiling from source / Compilazione |
+| [Architecture](https://github.com/umeglio/ftp-sync-service/wiki/Architecture) | Threads & data flow / Thread e flusso dati |
+| [Logging](https://github.com/umeglio/ftp-sync-service/wiki/Logging) | Log formats / Formati di log |
+| [Exclusions](https://github.com/umeglio/ftp-sync-service/wiki/Exclusions) | Pattern syntax / Sintassi pattern |
+| [Troubleshooting](https://github.com/umeglio/ftp-sync-service/wiki/Troubleshooting) | Common issues / Problemi comuni |
 
 ---
 
