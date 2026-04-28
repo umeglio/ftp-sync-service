@@ -17,10 +17,12 @@
 #include <atomic>
 #include <chrono>
 #include <psapi.h>
+#include <shlwapi.h>
 
 #pragma comment(lib, "wininet.lib")
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "psapi.lib")
+#pragma comment(lib, "shlwapi.lib")
 
 #define APP_VERSION "2.1-Enterprise"
 
@@ -33,6 +35,7 @@ struct Config {
     std::string localDir;
     std::string remoteDir;
     int pollIntervalMs = 600000;
+    std::vector<std::string> exclusions;
 };
 
 Config g_config;
@@ -400,8 +403,14 @@ public:
         ss << ts << " [CONFIG] Local Folder: " << cfg.localDir << "\n";
         ss << ts << " [CONFIG] Remote Folder: " << cfg.remoteDir << "\n";
         ss << ts << " [CONFIG] Poll Interval: " << (cfg.pollIntervalMs/1000) << "s\n";
+        ss << ts << " [CONFIG] Exclusions: " << cfg.exclusions.size() << " pattern(s)";
+        for (size_t i = 0; i < cfg.exclusions.size(); ++i) {
+            ss << (i == 0 ? " [" : ", ") << cfg.exclusions[i];
+        }
+        if (!cfg.exclusions.empty()) ss << "]";
+        ss << "\n";
 
-        WriteToFiles(ss.str(), ""); 
+        WriteToFiles(ss.str(), "");
     }
 };
 
@@ -449,8 +458,33 @@ bool LoadConfig(const std::string& iniPath) {
     g_config.remoteDir = buffer;
     if (!g_config.remoteDir.empty() && g_config.remoteDir.back() != '/') g_config.remoteDir += '/';
 
+    GetPrivateProfileStringA("FTP", "Exclusions", "", buffer, 512, iniPath.c_str());
+    g_config.exclusions.clear();
+    {
+        std::string raw = buffer;
+        std::stringstream ss(raw);
+        std::string token;
+        while (std::getline(ss, token, '|')) {
+            size_t start = token.find_first_not_of(" \t");
+            size_t end = token.find_last_not_of(" \t");
+            if (start != std::string::npos) g_config.exclusions.push_back(token.substr(start, end - start + 1));
+        }
+    }
+
     g_logger.LogConfig(iniPath, g_config);
     return !g_config.ip.empty() && !g_config.localDir.empty();
+}
+
+bool IsExcluded(const std::string& path) {
+    if (g_config.exclusions.empty()) return false;
+    std::string filename = path;
+    size_t pos = filename.find_last_of("\\/");
+    if (pos != std::string::npos) filename = filename.substr(pos + 1);
+    if (filename.empty()) return false;
+    for (const auto& pattern : g_config.exclusions) {
+        if (PathMatchSpecA(filename.c_str(), pattern.c_str())) return true;
+    }
+    return false;
 }
 
 std::string ToRemotePath(const std::string& relativePath) {
@@ -654,7 +688,8 @@ void SyncRemoteToLocal() {
             } else {
                 std::string relativeFile = ToLocalRelativePath(item.path);
                 if (IsLocallyDeleted(relativeFile)) continue;
-                
+                if (IsExcluded(relativeFile)) continue;
+
                 std::string localFile = g_config.localDir + relativeFile;
                 bool needDownload = false;
                 WIN32_FILE_ATTRIBUTE_DATA localAttr;
@@ -775,13 +810,26 @@ VOID CALLBACK FileChangeCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfe
         for (auto& r : renames) {
             std::string oldRel = r.first;
             std::string newRel = r.second;
-            ClearLocallyDeleted(oldRel); 
+            ClearLocallyDeleted(oldRel);
+
+            bool oldExc = IsExcluded(oldRel);
+            bool newExc = IsExcluded(newRel);
+            if (oldExc && newExc) {
+                Log("EXCLUDED", "Rename skipped: " + oldRel + " -> " + newRel);
+                continue;
+            }
 
             if (!connected) { LogFlow(1, "FTP Connect for Rename"); connected = ftp.Connect(); }
             if (connected) {
                 std::string oldRemote = ToRemotePath(oldRel);
                 std::string newRemote = ToRemotePath(newRel);
-                if (!ftp.RenameRemoteFile(oldRemote, newRemote)) {
+                if (oldExc) {
+                    std::string fullPath = g_config.localDir + newRel;
+                    DWORD attrs = GetFileAttributesA(fullPath.c_str());
+                    if (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY)) ftp.UploadFile(fullPath, newRemote);
+                } else if (newExc) {
+                    ftp.DeleteRemoteFile(oldRemote);
+                } else if (!ftp.RenameRemoteFile(oldRemote, newRemote)) {
                     ftp.DeleteRemoteFile(oldRemote);
                     std::string fullPath = g_config.localDir + newRel;
                     DWORD attrs = GetFileAttributesA(fullPath.c_str());
@@ -797,6 +845,10 @@ VOID CALLBACK FileChangeCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfe
             if (handledOldNames.count(act.first)) continue;
             if (act.second == FILE_ACTION_RENAMED_NEW_NAME || act.second == FILE_ACTION_ADDED || act.second == FILE_ACTION_MODIFIED) {
                 std::string relativePath = act.first;
+                if (IsExcluded(relativePath)) {
+                    Log("EXCLUDED", "Upload skipped: " + relativePath);
+                    continue;
+                }
                 std::string fullPath = g_config.localDir + relativePath;
                 DWORD attrs = GetFileAttributesA(fullPath.c_str());
                 bool isDir = (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY));
@@ -812,6 +864,10 @@ VOID CALLBACK FileChangeCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfe
                     }
                 }
             } else if (act.second == FILE_ACTION_REMOVED) {
+                 if (IsExcluded(act.first)) {
+                     Log("EXCLUDED", "Delete skipped: " + act.first);
+                     continue;
+                 }
                  if (!connected) { connected = ftp.Connect(); }
                  if (connected) ftp.DeleteRemoteFile(ToRemotePath(act.first));
             }

@@ -5,3 +5,4 @@ User=your_username
 Password=your_password
 LocalFolder=C:\Path\To\LocalFolder
 RemoteFolder=/
+Exclusions=*.tmp|*.bak|~*

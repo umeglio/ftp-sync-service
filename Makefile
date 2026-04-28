@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -O2 -Wall
-LDFLAGS = -lwininet -ladvapi32 -lpsapi -static
+LDFLAGS = -lwininet -ladvapi32 -lpsapi -lshlwapi -static
 TARGET = ftp_sync_service.exe
 SRC = ftp_sync_service.cpp
 

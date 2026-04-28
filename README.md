@@ -84,7 +84,7 @@ The project is written in standard C++ and requires WinAPI libraries. Tested wit
 Il progetto e scritto in C++ standard e richiede le librerie WinAPI. Testato con **MinGW32**.
 
 ```bash
-g++ -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -static
+g++ -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -lshlwapi -static
 ```
 
 ### Linked Dependencies / Dipendenze
@@ -94,6 +94,7 @@ g++ -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -s
 | `wininet` | FTP operations / Operazioni FTP |
 | `advapi32` | Windows Service management / Gestione Servizi Windows |
 | `psapi` | Memory usage monitoring / Monitoraggio utilizzo memoria |
+| `shlwapi` | Pattern matching for exclusions / Pattern matching esclusioni |
 
 ---
 
@@ -113,7 +114,13 @@ User=ftpuser
 Password=ftppassword
 LocalFolder=C:\LocalData
 RemoteFolder=/backup
+Exclusions=*.tmp|*.bak|~*
 ```
+
+### Exclusions / Esclusioni
+
+- **[IT]** Lista opzionale di pattern glob (`*`, `?`) separati da `|`. I file il cui nome corrisponde a uno qualsiasi dei pattern non vengono sincronizzati (in nessuna direzione). Esempio: `*.csv|*.prm|*.xls`.
+- **[EN]** Optional list of glob patterns (`*`, `?`) separated by `|`. Files whose name matches any pattern are not synchronized (in either direction). Example: `*.csv|*.prm|*.xls`.
 
 ---
 
