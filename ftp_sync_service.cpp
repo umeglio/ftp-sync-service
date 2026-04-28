@@ -32,7 +32,7 @@ struct Config {
     std::string pass;
     std::string localDir;
     std::string remoteDir;
-    int pollIntervalMs = 10000;
+    int pollIntervalMs = 600000;
 };
 
 Config g_config;
