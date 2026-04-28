@@ -13,7 +13,9 @@
       "Bash(gh run list:*)",
       "WebFetch(domain:umeglio.github.io)",
       "Bash(gh repo list:*)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl:*)",
+      "Bash(echo:*)"
     ]
   }
 }
