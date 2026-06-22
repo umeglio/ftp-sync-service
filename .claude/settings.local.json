@@ -18,7 +18,13 @@
       "Bash(echo:*)",
       "Bash(g++ -O2 -Wall -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -lshlwapi -static)",
       "Bash(g++ --version)",
-      "PowerShell(g++ -O2 -Wall -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -lshlwapi -static 2>&1)"
+      "PowerShell(g++ -O2 -Wall -o ftp_sync_service.exe ftp_sync_service.cpp -lwininet -ladvapi32 -lpsapi -lshlwapi -static 2>&1)",
+      "Bash(git checkout *)",
+      "Bash(gh pr create --base master --head fix/delete-resurrection --title 'Fix resurrection of locally-deleted files in full sync' --body ' *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git branch *)",
+      "Bash(gh pr *)"
     ]
   }
 }
