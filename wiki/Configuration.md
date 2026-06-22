@@ -20,6 +20,7 @@ User=ftpuser
 Password=ftppassword
 LocalFolder=C:\LocalData
 RemoteFolder=/backup
+FullSyncInterval=600
 Exclusions=*.tmp|*.bak|~*
 ```
 
@@ -50,6 +51,13 @@ Exclusions=*.tmp|*.bak|~*
 - **[IT]** Cartella radice remota su FTP (con slash). Per la root del FTP usa `/`.
 - **[EN]** Remote root folder on FTP (with slashes). For the FTP root use `/`.
 
+### `FullSyncInterval`
+- **[IT]** Numero di secondi tra un full sync remoto→locale e il successivo. Default `600` (10 min). Il POLLER percorre l'intero albero del server e scarica ogni file mancante o più recente. Valori assenti, vuoti, `0` o negativi ricadono automaticamente sul default di `600` (non si disabilita e non genera busy-loop).
+- **[EN]** Number of seconds between consecutive remote→local full syncs. Default `600` (10 min). The POLLER walks the entire server tree and downloads every missing or newer file. Missing, blank, `0` or negative values automatically fall back to the `600` default (it is never disabled and never busy-loops).
+
+> **[IT]** Il full sync è "forzato": non viene rimandato da una cancellazione locale appena avvenuta (salta la pausa di ciclo), ma mantiene sempre le guardie per-file che evitano di riscaricare i file appena cancellati. Vedi [Architecture](Architecture).
+> **[EN]** The full sync is "forced": it is not postponed by a just-occurred local deletion (it skips the cycle-level pause) but always keeps the per-file guards that avoid re-downloading just-deleted files. See [Architecture](Architecture).
+
 ### `Exclusions`
 - **[IT]** Lista opzionale di pattern glob separati da pipe. Vedi [Exclusions](Exclusions) per i dettagli.
 - **[EN]** Optional list of pipe-separated glob patterns. See [Exclusions](Exclusions) for details.
@@ -64,13 +72,15 @@ Exclusions=*.tmp|*.bak|~*
 
 | Constant | Value | Source / Sorgente |
 |----------|-------|--------------------|
-| Poll interval / Intervallo polling | `600 000 ms` (10 min) | `Config::pollIntervalMs` |
 | Anti-loop window / Finestra anti-loop | `5 s` | `CheckAndClearRecentAction` |
 | Local-delete pause / Pausa post-delete locale | `10 s` | `DELETE_PAUSE_THRESHOLD_SEC` |
 | Deleted-set retention / TTL elenco cancellati | `60 s` | `CleanupOldDeletedEntries` |
 | Heartbeat | `60 s` | `ServiceMain` |
 | Periodic summary / Riepilogo periodico | `600 s` | `ServiceMain` |
 | Watcher buffer / Buffer watcher | `64 KiB` | `WATCHER_CONTEXT::buffer` |
+
+> **[IT]** L'intervallo del full sync remoto→locale **non** è più hard-coded: si configura con `FullSyncInterval` (vedi sopra).
+> **[EN]** The remote→local full-sync interval is **no longer** hard-coded: configure it with `FullSyncInterval` (see above).
 
 ---
 

@@ -34,7 +34,7 @@ struct Config {
     std::string pass;
     std::string localDir;
     std::string remoteDir;
-    int pollIntervalMs = 600000;
+    int fullSyncIntervalSec = 600;
     std::vector<std::string> exclusions;
 };
 
@@ -402,7 +402,7 @@ public:
         ss << ts << " [CONFIG] User: " << cfg.user << "\n";
         ss << ts << " [CONFIG] Local Folder: " << cfg.localDir << "\n";
         ss << ts << " [CONFIG] Remote Folder: " << cfg.remoteDir << "\n";
-        ss << ts << " [CONFIG] Poll Interval: " << (cfg.pollIntervalMs/1000) << "s\n";
+        ss << ts << " [CONFIG] Full Sync Interval: " << cfg.fullSyncIntervalSec << "s (forced)\n";
         ss << ts << " [CONFIG] Exclusions: " << cfg.exclusions.size() << " pattern(s)";
         for (size_t i = 0; i < cfg.exclusions.size(); ++i) {
             ss << (i == 0 ? " [" : ", ") << cfg.exclusions[i];
@@ -457,6 +457,12 @@ bool LoadConfig(const std::string& iniPath) {
     GetPrivateProfileStringA("FTP", "RemoteFolder", "", buffer, 512, iniPath.c_str());
     g_config.remoteDir = buffer;
     if (!g_config.remoteDir.empty() && g_config.remoteDir.back() != '/') g_config.remoteDir += '/';
+
+    // Cadence (seconds) of the remote->local full sync. Absent / blank / 0 /
+    // negative all fall back to the safe 600s default (never busy-loops, never
+    // silently disabled).
+    g_config.fullSyncIntervalSec = GetPrivateProfileIntA("FTP", "FullSyncInterval", 600, iniPath.c_str());
+    if (g_config.fullSyncIntervalSec <= 0) g_config.fullSyncIntervalSec = 600;
 
     GetPrivateProfileStringA("FTP", "Exclusions", "", buffer, 512, iniPath.c_str());
     g_config.exclusions.clear();
@@ -652,14 +658,20 @@ public:
 
 // --- THREADS ---
 
-void SyncRemoteToLocal() {
-    time_t lastDel = g_lastLocalDeleteTime.load();
-    if (lastDel > 0 && (time(NULL) - lastDel < DELETE_PAUSE_THRESHOLD_SEC)) {
-        LogFlow(3, "SYNC PAUSED (Local delete in progress)");
-        return;
+// forced (full sync): skips ONLY the coarse cycle-level delete pause, so the
+// full sync always runs instead of being postponed by a recent local delete.
+// The per-path IsLocallyDeleted guards below stay active in BOTH modes to
+// avoid resurrecting files the user just deleted locally.
+void SyncRemoteToLocal(bool forced = false) {
+    if (!forced) {
+        time_t lastDel = g_lastLocalDeleteTime.load();
+        if (lastDel > 0 && (time(NULL) - lastDel < DELETE_PAUSE_THRESHOLD_SEC)) {
+            LogFlow(3, "SYNC PAUSED (Local delete in progress)");
+            return;
+        }
     }
 
-    LogFlow(1, "FTP CONNECT & SYNC START");
+    LogFlow(1, forced ? "FTP CONNECT & FULL SYNC START" : "FTP CONNECT & SYNC START");
     FtpSession ftp;
     if (!ftp.Connect()) {
         LogFlow(5, "FTP Connection Failed");
@@ -714,15 +726,21 @@ void SyncRemoteToLocal() {
             }
         }
     }
-    LogFlow(2, "SYNC CYCLE COMPLETE");
+    LogFlow(2, forced ? "FULL SYNC CYCLE COMPLETE" : "SYNC CYCLE COMPLETE");
 }
 
 void RemotePollerThread(DWORD parentTid) {
     RegisterThread("POLLER", parentTid);
+
+    // Remote->local full sync runs every FullSyncInterval seconds (>=1, clamped
+    // in LoadConfig). Forced mode skips only the coarse cycle-level delete pause;
+    // the per-path IsLocallyDeleted guards still protect just-deleted files.
+    int intervalSec = g_config.fullSyncIntervalSec;
+
     while (g_running) {
-        SyncRemoteToLocal();
-        LogFlow(3, "Sleeping for " + std::to_string(g_config.pollIntervalMs/1000) + "s");
-        for(int i=0; i<g_config.pollIntervalMs/1000 && g_running; i++) Sleep(1000);
+        SyncRemoteToLocal(true);
+        LogFlow(3, "Sleeping for " + std::to_string(intervalSec) + "s");
+        for(int i=0; i<intervalSec && g_running; i++) Sleep(1000);
         LogFlow(4, "Waking up");
     }
     g_logger.LogDestruction(GetCurrentThreadId());

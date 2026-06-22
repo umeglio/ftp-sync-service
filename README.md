@@ -80,7 +80,7 @@
 |--------|-------------|
 | **SERVICE_MAIN** | Main loop, heartbeat every 60s, periodic summary every 10 min |
 | **WATCHER** | Monitors local folder via `ReadDirectoryChangesW`, uploads/deletes/renames on FTP |
-| **POLLER** | Polls FTP server every 10 min (configurable), downloads new/updated files locally |
+| **POLLER** | Full sync from FTP server every `FullSyncInterval` seconds (default 600), downloads new/updated files locally |
 
 > **[IT]** Per maggiori dettagli architetturali consulta la pagina [Architecture](https://github.com/umeglio/ftp-sync-service/wiki/Architecture) del wiki.
 > **[EN]** For deeper architectural details see the [Architecture](https://github.com/umeglio/ftp-sync-service/wiki/Architecture) wiki page.
@@ -130,6 +130,7 @@ User=ftpuser
 Password=ftppassword
 LocalFolder=C:\LocalData
 RemoteFolder=/backup
+FullSyncInterval=600
 Exclusions=*.tmp|*.bak|~*
 ```
 
@@ -140,7 +141,16 @@ Exclusions=*.tmp|*.bak|~*
 | `User` / `Password` | FTP credentials / Credenziali FTP |
 | `LocalFolder` | Absolute path to the local folder to sync / Percorso assoluto della cartella locale |
 | `RemoteFolder` | Remote root folder on FTP / Cartella radice remota su FTP |
+| `FullSyncInterval` | Seconds between remote→local full syncs (default 600) / Secondi tra i full sync remoto→locale (default 600) |
 | `Exclusions` | Pipe-separated glob patterns to skip / Pattern glob separati da pipe da escludere |
+
+### Full Sync / Sincronizzazione Completa
+
+- **[IT]** Ogni `FullSyncInterval` secondi (default 600) il servizio esegue un **full sync** remoto→locale: percorre l'intero albero del server e scarica ogni file mancante o più recente. È "forzato", cioè non viene rimandato da una cancellazione locale appena avvenuta, ma **non** resuscita i file che hai appena cancellato (le guardie per-file restano attive). Valori assenti, vuoti o ≤ 0 ricadono sul default di 600s. La direzione locale→remoto resta gestita in tempo reale dal WATCHER.
+- **[EN]** Every `FullSyncInterval` seconds (default 600) the service performs a remote→local **full sync**: it walks the entire server tree and downloads every missing or newer file. It is "forced", i.e. it is not postponed by a just-occurred local deletion, but it does **not** resurrect files you just deleted (per-file guards stay active). Missing, blank or ≤ 0 values fall back to the 600s default. The local→remote direction stays real-time via the WATCHER.
+
+> **[IT]** Pagina dedicata: [Configuration](https://github.com/umeglio/ftp-sync-service/wiki/Configuration).
+> **[EN]** Dedicated page: [Configuration](https://github.com/umeglio/ftp-sync-service/wiki/Configuration).
 
 ### Exclusions / Esclusioni
 

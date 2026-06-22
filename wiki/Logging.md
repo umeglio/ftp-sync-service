@@ -42,6 +42,7 @@
 | `[RENAME]` | Remote rename / Rinomina remota |
 | `[BATCH_OP]` | Batch of local events / Batch di eventi locali |
 | `[EXCLUDED]` | Skipped due to exclusion pattern / Saltato per pattern di esclusione |
+| `FULL SYNC START` / `FULL SYNC CYCLE COMPLETE` | Forced full sync boundaries (POLLER) / Inizio e fine del full sync forzato (POLLER) |
 | `[CONFIG]` | Configuration loaded at startup / Configurazione caricata all'avvio |
 | `[HEARTBEAT]` | 60-second alive marker / Marker vita ogni 60 s |
 | `[START]` / `[END]` / `[PAUSE]` / `[RESUME]` / `[ERROR]` | Flow markers / Marker di flusso |
