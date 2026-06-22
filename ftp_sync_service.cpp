@@ -544,8 +544,14 @@ void ClearLocallyDeleted(const std::string& relativePath) {
 void CleanupOldDeletedEntries() {
     std::lock_guard<std::mutex> lock(g_stateMutex);
     time_t now = time(NULL);
+    // Keep tombstones alive for at least one full-sync cycle (plus margin) so a
+    // locally-deleted file whose remote delete failed is not re-downloaded
+    // before the next full sync has had a chance to re-attempt that delete.
+    // g_config.fullSyncIntervalSec is set once at startup and never mutated.
+    time_t ttl = (time_t)g_config.fullSyncIntervalSec + 60;
+    if (ttl < 60) ttl = 60;
     for (auto it = g_locallyDeleted.begin(); it != g_locallyDeleted.end(); ) {
-        if (now - it->second > 60) it = g_locallyDeleted.erase(it);
+        if (now - it->second > ttl) it = g_locallyDeleted.erase(it);
         else ++it;
     }
 }
@@ -699,8 +705,12 @@ void SyncRemoteToLocal(bool forced = false) {
                 dirQueue.push(item.path);
             } else {
                 std::string relativeFile = ToLocalRelativePath(item.path);
-                if (IsLocallyDeleted(relativeFile)) continue;
                 if (IsExcluded(relativeFile)) continue;
+                // The user deleted this locally: re-attempt the mirror delete on
+                // the server (best effort) and never re-download it. The live
+                // tombstone check means a concurrent re-add (which clears the
+                // tombstone) immediately stops us from deleting the new copy.
+                if (IsLocallyDeleted(relativeFile)) { ftp.DeleteRemoteFile(item.path); continue; }
 
                 std::string localFile = g_config.localDir + relativeFile;
                 bool needDownload = false;
